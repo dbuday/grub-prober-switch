@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+#
+######Script changes grub ##########
+#  This script switches Grub to prober
+#	Windows OS and vice-versa ( not to)
+#
+#	Protected on three levels
+#	1 - immutable attribute on grub file
+#	2 - Prober is turned on/off in grub file
+#	3 - executable in /etc/grub.d is set on/off
+##############################
+#
+# Author: Davor Buday
+# Email: davor.buday@gmail.com
+#
+#############################
+
+
+### Unset immutable attribute if set ###
+sudo chattr -i /etc/default/grub
+############################
+
+### If doesn't exist - create it ############
+if ! grep -q GRUB_DISABLE_OS_PROBER /etc/default/grub; then
+	sudo sed -i '/GRUB_DEFAULT=0/i GRUB_DISABLE_OS_PROBER=true' /etc/default/grub
+	echo
+	echo "CREATED"
+	echo
+fi
+################################
+
+######### DO THE SWITCH #################
+if  grep -q GRUB_DISABLE_OS_PROBER=true /etc/default/grub
+then
+	sudo sed -i 's/GRUB_DISABLE_OS_PROBER=true/GRUB_DISABLE_OS_PROBER=false/g' /etc/default/grub
+	sudo chmod a+x /etc/grub.d/30_os-prober
+	echo
+	echo "PROBER ENABLED"
+	echo
+else
+	sudo sed -i 's/GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER=true/g' /etc/default/grub
+	sudo chmod a-x /etc/grub.d/30_os-prober
+	echo
+	echo "PROBER DISABLED"
+	echo
+fi
+#######################################
+
+### Set immutable attribute again ###
+sudo chattr +i /etc/default/grub
+############################
+
+echo "Press a key to update Grub (or Ctrl+C to cancel)..."
+read -n 1 -s
+
+#### UPDATE GRUB ####
+sudo update-grub
+##################
+
+echo
+echo " D O N E  ! ! ! "
+echo
+
+echo "Press a key to exit..."
+read -n 1 -s
+
+exit 0
